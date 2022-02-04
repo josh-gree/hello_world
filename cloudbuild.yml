@@ -1,0 +1,19 @@
+steps:
+- name: 'python:3.9.9'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      apt-get -y update \
+      && apt-get -y install zip \
+      && pip install poetry && poetry install --no-dev \
+      && poetry export --without-hashes -o ./src/requirements.txt \
+      && cd src && zip -r archive.zip * && mv archive.zip ../archive.zip
+- name: 'hashicorp/terraform:1.1.5'
+  entrypoint: 'sh'
+  args:
+    - '-c'
+    - |
+      terraform -chdir=./infra init && terraform -chdir=./infra apply -json -auto-approve -var name=$REPO_NAME -var trigger=cron 
+options:
+  logging: CLOUD_LOGGING_ONLY
